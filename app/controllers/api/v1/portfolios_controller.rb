@@ -36,17 +36,42 @@ class Api::V1::PortfoliosController < ApplicationController
       end
     end
   
+
     def update
+      if authorized?
+        respond_to do |format|
+          if @portfolio.update(portfolio_params)
+            format.json do
+              render :show,
+                    status: :ok,
+                    location: api_v1_portfolio_path(@portfolio)
+            end
+          else
+            format.json do
+              render json: @portfolio.errors, status: :unprocessable_entity
+            end
+          end
+        end
+      else
+        handle_unauthorized
+      end
     end
   
     def destroy
+      if authorized?
+        @portfolio.destroy
+        respond_to { |format| format.json { head :no_content } }
+      else
+        handle_unauthorized
+      end
     end
   
     private
   
     def set_portfolio
-      @set_portfolio = set_portfolio.find(params[:id])
+      @portfolio = Portfolio.find(params[:id])
     end
+
     def authorized?
       @portfolio.user == current_user
     end
